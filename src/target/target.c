@@ -108,6 +108,9 @@ static struct target_type *target_types[] = {
 	&quark_d20xx_target,
 	&quark_x10xx_target,
 	&riscv_target,
+#if BUILD_WLINKE == 1
+	&wch_riscv_target,
+#endif
 	&stm8_target,
 	&testee_target,
 	&xscale_target,

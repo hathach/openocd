@@ -207,6 +207,9 @@ endif
 if XDS110
 DRIVERFILES += %D%/xds110.c
 endif
+if WLINKE
+DRIVERFILES += %D%/wlinke.c
+endif
 if AM335XGPIO
 DRIVERFILES += %D%/am335xgpio.c
 endif

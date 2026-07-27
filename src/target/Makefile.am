@@ -243,3 +243,7 @@ include %D%/openrisc/Makefile.am
 include %D%/riscv/Makefile.am
 include %D%/xtensa/Makefile.am
 include %D%/espressif/Makefile.am
+
+if WLINKE
+%C%_libtarget_la_SOURCES += %D%/wch_riscv_compat.c
+endif

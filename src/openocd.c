@@ -170,8 +170,17 @@ COMMAND_HANDLER(handle_init_command)
 	jtag_poll_unmask(save_poll_mask);
 
 	/* initialize telnet subsystem */
-	if (gdb_target_add_all(all_targets) != ERROR_OK)
-		return ERROR_FAIL;
+	if (gdb_target_add_all(all_targets) != ERROR_OK) {
+		if (transport_is_sdi()) {
+			/* Vendor WCH configs create gdb servers on fixed ports and
+			 * parallel flash sessions race for them; the vendor fork
+			 * ignored the failure, so keep that behavior for
+			 * vendor-config (sdi) sessions. */
+			LOG_WARNING("gdb server failed to start; continuing without it (sdi vendor-config compatibility)");
+		} else {
+			return ERROR_FAIL;
+		}
+	}
 
 	target_register_event_callback(log_target_callback_event_handler, CMD_CTX);
 

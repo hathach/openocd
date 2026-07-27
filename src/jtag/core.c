@@ -950,7 +950,7 @@ int default_interface_jtag_execute_queue(void)
 		return ERROR_FAIL;
 	}
 
-	if (!transport_is_jtag()) {
+	if (!transport_is_jtag() && !transport_is_sdi()) {
 		/*
 		 * FIXME: This should not happen!
 		 * There could be old code that queues jtag commands with non jtag interfaces so, for

@@ -88,6 +88,12 @@ NOR_DRIVERS = \
 	%D%/xmc4xxx.c \
 	%D%/hpm_xpi.c
 
+if WLINKE
+NOR_DRIVERS += \
+	%D%/wcharm.c \
+	%D%/wchriscv.c
+endif
+
 NORHEADERS = \
 	%D%/artery.h \
 	%D%/core.h \

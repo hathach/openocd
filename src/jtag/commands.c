@@ -38,7 +38,7 @@ static struct jtag_command **next_command_pointer = &jtag_command_queue;
 
 void jtag_queue_command(struct jtag_command *cmd)
 {
-	if (!transport_is_jtag()) {
+	if (!transport_is_jtag() && !transport_is_sdi()) {
 		/*
 		 * FIXME: This should not happen!
 		 * There could be old code that queues jtag commands with non jtag interfaces so, for

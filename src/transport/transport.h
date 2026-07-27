@@ -25,6 +25,8 @@
 #define TRANSPORT_SWIM                  BIT(6)
 
 /* mask for valid ID */
+#define TRANSPORT_SDI                   BIT(7)
+
 #define TRANSPORT_VALID_MASK            \
 	(TRANSPORT_JTAG |                   \
 	 TRANSPORT_SWD |                    \
@@ -32,7 +34,8 @@
 	 TRANSPORT_HLA_SWD |                \
 	 TRANSPORT_DAPDIRECT_JTAG |         \
 	 TRANSPORT_DAPDIRECT_SWD |          \
-	 TRANSPORT_SWIM)
+	 TRANSPORT_SWIM |                   \
+	 TRANSPORT_SDI)
 
 /**
  * Wrapper for transport lifecycle operations.
@@ -108,6 +111,7 @@ bool transport_is_swd(void);
 bool transport_is_dapdirect_jtag(void);
 bool transport_is_dapdirect_swd(void);
 bool transport_is_swim(void);
+bool transport_is_sdi(void);
 
 #if BUILD_HLADAPTER
 bool transport_is_hla(void);

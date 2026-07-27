@@ -158,6 +158,9 @@ struct adapter_driver *adapter_drivers[] = {
 #if BUILD_VSLLINK == 1
 		&vsllink_adapter_driver,
 #endif
+#if BUILD_WLINKE == 1
+		&wlinke_adapter_driver,
+#endif
 #if BUILD_XDS110 == 1
 		&xds110_adapter_driver,
 #endif
