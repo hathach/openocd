@@ -24,6 +24,7 @@
 #include "program.h"
 #include "gdb_regs.h"
 #include "rtos/rtos.h"
+#include <rtt/rtt.h>
 #include "debug_defines.h"
 #include <helper/bits.h>
 #include "field_helpers.h"
@@ -5906,6 +5907,9 @@ static const struct command_registration riscv_command_handlers[] = {
 		.help = "ARM Command Group",
 		.usage = "",
 		.chain = semihosting_common_handlers
+	},
+	{
+		.chain = rtt_target_command_handlers,
 	},
 	COMMAND_REGISTRATION_DONE
 };
