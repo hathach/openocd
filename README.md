@@ -1,3 +1,39 @@
+# OpenOCD for the TinyUSB test rig
+
+One OpenOCD build that flashes, debugs and RTT-captures every board family on
+the [TinyUSB](https://github.com/hathach/tinyusb) hardware-in-the-loop rig, so
+the rig does not need four different OpenOCD trees.
+
+This is the `tinyusb` branch, tracking
+[openocd-org/openocd](https://github.com/openocd-org/openocd) `master`.
+Everything not listed below is unmodified mainline.
+
+## Cherry-picked / ported from
+
+| Source repo | What we took |
+| --- | --- |
+| [raspberrypi/openocd](https://github.com/raspberrypi/openocd) (`sdk-2.0.0`) | `rp2350-rescue.cfg`, `rp2350-dbgkey-secure.cfg`, `rp2350-dbgkey-nonsecure.cfg` (all verified to parse here), plus `rp2350-riscv.cfg` for reference only — it attaches the cores via `-dap`/`-ap-num`, which needs that fork's riscv-target patch. The RP2040/RP2350 C flash driver is already better in mainline (`rp2xxx.c`). |
+| [analogdevicesinc/openocd](https://github.com/analogdevicesinc/openocd) (`release`) | Every max32 config that fork has and mainline lacks, re-ported onto mainline's `max32xxx_common.cfg`: `max32665.cfg`, `max32665_nsrst.cfg`, `max32520.cfg`, `max32570.cfg`, plus the `max32*_riscv.cfg` trio kept verbatim for reference (their `rvmax` coprocessor target type is ADI-only). QSPI banks need the ADI-only `max32xxx_qspi` driver and stay disabled. |
+| [hathach/riscv-openocd-wch](https://github.com/hathach/riscv-openocd-wch) (originally [dragonlock2/miscboards](https://github.com/dragonlock2/miscboards) WCH SDK) | `wlinke` adapter driver and the WCH flash drivers (`wch_riscv`, `wch_arm`) for CH32V/CH32F/CH5xx over WCH-Link/LinkE, re-worked onto mainline's generic `riscv` target via a JTAG DTM emulation in the adapter. Vendor configs run unchanged — the `sdi` transport and a `wch_riscv` target type (mainline riscv with probe-mediated resets) are kept as compatibility aliases, so this build is a drop-in superset of the vendor fork. |
+
+Espressif needs nothing extra: mainline's inherited support (esp32/s2/s3
+targets, `esp_usb_jtag`) debug-attaches the rig's ESP32-S3 over builtin
+USB-JTAG as-is (halt/resume verified). The rig still flashes and debugs
+Espressif boards through ESP-IDF's own environment (esptool /
+openocd-esp32) as its primary flow.
+
+## Build (this fork)
+
+    ./bootstrap
+    ./configure --enable-jlink --enable-cmsis-dap --enable-stlink \
+                --enable-wlinke --disable-werror
+    make -j$(nproc)
+
+`libjim-dev` is required — mainline no longer builds the bundled jimtcl by
+default and configure hard-fails without it.
+
+---
+
 # Welcome to OpenOCD
 
 OpenOCD provides on-chip programming and debugging support with a
