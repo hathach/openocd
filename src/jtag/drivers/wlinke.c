@@ -1948,8 +1948,11 @@ COMMAND_HANDLER(rst_set)
 
 COMMAND_HANDLER(wlink_set_index)
 {
-	if (CMD_ARGC == 1)
-		COMMAND_PARSE_NUMBER(u32, CMD_ARGV[0], gIndex);
+	if (CMD_ARGC == 1) {
+		uint32_t index;
+		COMMAND_PARSE_NUMBER(u32, CMD_ARGV[0], index);
+		gIndex = index;
+	}
 	return ERROR_OK;
 }
 
