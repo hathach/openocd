@@ -66,10 +66,22 @@ FLASH_BANK_COMMAND_HANDLER(ch32vx_flash_bank_command)
 
 	return ERROR_OK;
 }
+/* read-protect capable families since CH32V4x7, per wlink's RiscvChip::support_flash_protect() */
+static bool ch32vx_is_wlink_protect_family(void)
+{
+	switch (riscvchip) {
+	case 0x46: case 0x4e: case 0x86: case 0x8b: case 0x8e:
+	case 0xa6: case 0xab: case 0xc6: case 0xce: case 0xe6:
+		return true;
+	default:
+		return false;
+	}
+}
+
 static int ch32x_protect(struct flash_bank *bank, int set, unsigned int first, unsigned int last)
 {
 
-	if ((riscvchip == 1) || (riscvchip == 5) || (riscvchip == 6) || (riscvchip == 9) || (riscvchip ==0x0c)||(riscvchip==0x0e))
+	if ((riscvchip == 1) || (riscvchip == 5) || (riscvchip == 6) || (riscvchip == 9) || (riscvchip ==0x0c)||(riscvchip==0x0e) || ch32vx_is_wlink_protect_family())
 	{
 		int retval = wlink_flash_protect(set);
 		if (retval == ERROR_OK)
@@ -99,7 +111,7 @@ static int ch32vx_protect_check(struct flash_bank *bank)
 {
 	if (riscvchip == 1)
 		wlink_softreset();
-	if ((riscvchip == 1) || (riscvchip == 5) || (riscvchip == 6) || (riscvchip == 9) || (riscvchip == 0x0c) || (riscvchip == 0x0e))
+	if ((riscvchip == 1) || (riscvchip == 5) || (riscvchip == 6) || (riscvchip == 9) || (riscvchip == 0x0c) || (riscvchip == 0x0e) || ch32vx_is_wlink_protect_family())
 	{
 		int retval = wlnik_protect_check();
 		if (retval == 4)
@@ -119,7 +131,7 @@ static int ch32vx_erase(struct flash_bank *bank, unsigned int first, unsigned in
 {
 	if (pageerase)
 		return ERROR_OK;
-	if ((riscvchip == 5) || (riscvchip == 6) || (riscvchip == 9)|| (riscvchip == 0x0c)||(riscvchip==0x0e))
+	if ((riscvchip == 5) || (riscvchip == 6) || (riscvchip == 9)|| (riscvchip == 0x0c)||(riscvchip==0x0e) || ch32vx_is_wlink_protect_family())
 	{
 		int retval = wlnik_protect_check();
 		if (retval == 4)
@@ -146,7 +158,7 @@ static int ch32vx_write(struct flash_bank *bank, const uint8_t *buffer,
 {
 
 	struct target *target = bank->target;
-	if (((riscvchip == 5) || (riscvchip == 6) || (riscvchip == 9)|| (riscvchip == 0x0c)||(riscvchip==0x0e)) && (writeloop==0))
+	if (((riscvchip == 5) || (riscvchip == 6) || (riscvchip == 9)|| (riscvchip == 0x0c)||(riscvchip==0x0e) || ch32vx_is_wlink_protect_family()) && (writeloop==0))
 	{
 		int retval = wlnik_protect_check();
 		if (retval == 4)
@@ -189,7 +201,8 @@ static int ch32vx_write(struct flash_bank *bank, const uint8_t *buffer,
 
 static int ch32vx_get_device_id(struct flash_bank *bank, uint32_t *device_id)
 {
-	if ((riscvchip != 0x02) && (riscvchip != 0x03)&& (riscvchip != 0x07)&& (riscvchip != 0x0b))
+	if ((riscvchip != 0x02) && (riscvchip != 0x03)&& (riscvchip != 0x07)&& (riscvchip != 0x0b) &&
+		(riscvchip != 0x0f) && (riscvchip != 0x4b) && (riscvchip != 0x8b) && (riscvchip != 0x8e) && (riscvchip != 0xab))
 	{
 		struct target *target = bank->target;
 		int retval = target_read_u32(target, 0x1ffff7e8, device_id);
@@ -232,12 +245,56 @@ static int ch32vx_get_flash_size(struct flash_bank *bank, uint32_t *flash_size_i
 		*flash_size_in_kb = 64;
 		return ERROR_OK;
 	}
+	switch (riscvchip) {
+	case 0x0f: /* CH564: 448 KiB code flash (CH564DS0 Rev 1.4, 1.2 Memory Map) */
+	case 0x4b: /* CH585/CH584: 448 KiB code flash; CH584X's contiguous 480 KiB is not distinguished */
+	case 0xab: /* CH586/CH587: 448 KiB code flash; the 960 KiB W parts are not distinguished */
+		*flash_size_in_kb = 448;
+		return ERROR_OK;
+	case 0x8b: /* CH570/CH572 (CH572DS1 Rev 1.1, 2.3.1) */
+		*flash_size_in_kb = 240;
+		return ERROR_OK;
+	case 0x86: /* CH32V317 (CH32V303_305_307_317 datasheet) */
+	case 0xe6: /* CH32X315/X305, ESIG left unprogrammed (CH32X315DS0 Rev 1.2) */
+		*flash_size_in_kb = 480;
+		return ERROR_OK;
+	case 0x8e: /* CH32M030 (CH32M030DS0 Rev 1.2) */
+		*flash_size_in_kb = 64;
+		return ERROR_OK;
+	case 0x46: /* CH645: MounRiver's OpenOCD value, undocumented */
+		*flash_size_in_kb = 512;
+		return ERROR_OK;
+	case 0x4e: /* CH32V00X: size by part, as MounRiver's OpenOCD decodes chip_type */
+		switch (chip_type >> 20) {
+		case 2:
+			*flash_size_in_kb = 16;
+			return ERROR_OK;
+		case 4:
+		case 5:
+			*flash_size_in_kb = 32;
+			return ERROR_OK;
+		case 6:
+		case 7:
+			*flash_size_in_kb = 62;
+			return ERROR_OK;
+		default:
+			LOG_ERROR("unknown CH32V00X part 0x%08x", chip_type);
+			return ERROR_FAIL;
+		}
+	default:
+		break;
+	}
+
 	/* vendor code passes flash_size_in_kb (uint32_t *) straight to
 	 * target_read_u16; go through a u16 so mainline compiles */
 	uint16_t size_kb = 0;
 	int retval = target_read_u16(target, 0x1ffff7e0, &size_kb);
 	if (retval != ERROR_OK)
 		return retval;
+	if ((riscvchip == 0xa6 || riscvchip == 0xc6 || riscvchip == 0xce) && (size_kb == 0 || size_kb == 0xffff)) {
+		LOG_ERROR("invalid flash size 0x%04x in ESIG", size_kb);
+		return ERROR_FAIL;
+	}
 	*flash_size_in_kb = size_kb;
 	return ERROR_OK;
 }
@@ -265,6 +322,9 @@ static int ch32vx_probe(struct flash_bank *bank)
 
 	/* get flash size from target. */
 	retval = ch32vx_get_flash_size(bank, &flash_size_in_kb);
+	/* no safe default size for these: report the failure instead of assuming 512 KiB */
+	if (retval != ERROR_OK && (riscvchip == 0x4e || riscvchip == 0xa6 || riscvchip == 0xc6 || riscvchip == 0xce))
+		return retval;
 
 	if ((flash_size_in_kb)&&(!flash_unfreeze)&&(riscvchip !=0x09))
 		LOG_INFO("flash size = %dkbytes", flash_size_in_kb);
