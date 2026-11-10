@@ -1186,7 +1186,7 @@ int wlink_ready_write(uint32_t address, uint32_t count)
 		wlink_ramcodewrite(flash_op8571, sizeof(flash_op8571));
 		break;
 	case 0x0c:
-		wlink_ramcodewrite(flash_op643, sizeof(flash_op8571));
+		wlink_ramcodewrite(flash_op643, sizeof(flash_op643));
 		break;
 	case 0x0e:
 		wlink_ramcodewrite(flash_opl103, sizeof(flash_opl103));
